@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIS Database — Aedan and Ian Studios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple-50:#EEEDFE;--purple-200:#AFA9EC;--purple-400:#7F77DD;--purple-600:#534AB7;--purple-800:#3C3489;
+  --teal-50:#E1F5EE;--teal-400:#1D9E75;--teal-800:#085041;
+  --amber-50:#FAEEDA;--amber-400:#EF9F27;--amber-800:#633806;
+  --blue-50:#E6F1FB;--blue-400:#378ADD;--blue-800:#0C447C;
+  --coral-50:#FAECE7;--coral-400:#D85A30;--coral-800:#4A1B0C;
+  --gray-50:#F1EFE8;--gray-200:#B4B2A9;--gray-800:#2C2C2A;
+  --bg:#0e0d14;--surface:#16141f;--surface2:#1e1b2a;--surface3:#252233;
+  --border:rgba(127,119,221,0.18);--border2:rgba(127,119,221,0.32);
+  --text:#f0eeff;--text2:#a89fc7;--text3:#6b6285;
+  --accent:#7F77DD;--accent2:#AFA9EC;
+  --radius:12px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Header */
+.header{padding:2rem 2rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.5px}
+.logo span{color:var(--accent)}
+.logo-sub{font-size:13px;color:var(--text3);font-family:'DM Sans',sans-serif;margin-top:2px}
+.header-right{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* Main layout */
+.main{padding:1.5rem 2rem;max-width:1200px;margin:0 auto}
+
+/* Search + controls */
+.controls{display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap}
+.search-wrap{position:relative;flex:1;min-width:200px}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:0.4;pointer-events:none}
+.search{width:100%;padding:9px 12px 9px 38px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s}
+.search:focus{border-color:var(--accent)}
+.search::placeholder{color:var(--text3)}
+
+/* Category tabs */
+.cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.5rem}
+.cat-tab{padding:6px 16px;border-radius:20px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all 0.15s}
+.cat-tab:hover{border-color:var(--accent2);color:var(--text)}
+.cat-tab.active{background:var(--purple-600);border-color:var(--purple-600);color:#fff;font-weight:500}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:2rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color 0.15s,transform 0.15s}
+.card:hover{border-color:var(--accent2);transform:translateY(-2px)}
+.card-img{width:100%;height:130px;object-fit:cover;display:block;background:var(--surface2)}
+.card-img-placeholder{width:100%;height:130px;background:var(--surface2);display:flex;align-items:center;justify-content:center}
+.card-img-placeholder svg{opacity:0.2}
+.card-body{padding:12px}
+.card-cat{font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:7px}
+.card-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px}
+.card-sub{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Empty */
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:14px;grid-column:1/-1}
+
+/* Buttons */
+.btn{padding:8px 18px;border-radius:var(--radius-sm);font-size:13px;font-family:inherit;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text);transition:all 0.15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--purple-600);border-color:var(--purple-600);color:#fff}
+.btn.primary:hover{background:var(--purple-800)}
+.btn.danger{border-color:rgba(224,75,74,0.4);color:#e24b4a}
+.btn.danger:hover{background:rgba(224,75,74,0.1)}
+.btn.sm{padding:5px 12px;font-size:12px}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-hero{position:relative}
+.modal-hero img{width:100%;height:200px;object-fit:cover;display:block}
+.modal-hero-placeholder{width:100%;height:140px;background:var(--surface2);display:flex;align-items:center;justify-content:center}
+.modal-hero-placeholder svg{opacity:0.15}
+.modal-body{padding:1.25rem 1.5rem 1.5rem}
+.modal-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.modal-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:700}
+.close-btn{background:none;border:none;color:var(--text2);cursor:pointer;font-size:22px;line-height:1;padding:4px}
+.close-btn:hover{color:var(--text)}
+.modal-cat-badge{font-size:12px;font-weight:500;padding:3px 12px;border-radius:10px;display:inline-block;margin-bottom:1rem}
+.field-block{margin-bottom:12px}
+.field-label{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:4px}
+.field-val{font-size:14px;color:var(--text2);line-height:1.6}
+.modal-actions{display:flex;gap:8px;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+
+/* Add / Edit form */
+.form-panel{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;display:none}
+.form-panel.open{display:block}
+.form-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:1.25rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color 0.15s}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--accent)}
+.form-row textarea{resize:vertical;min-height:80px}
+.form-row select option{background:var(--surface)}
+.photo-drop{border:2px dashed var(--border2);border-radius:var(--radius-sm);padding:1.5rem;text-align:center;cursor:pointer;transition:border-color 0.15s;position:relative}
+.photo-drop:hover{border-color:var(--accent)}
+.photo-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-drop svg{display:block;margin:0 auto 8px;opacity:0.4}
+.photo-drop p{font-size:13px;color:var(--text3)}
+.photo-preview{width:100%;height:120px;object-fit:cover;border-radius:var(--radius-sm);display:none}
+.photo-preview.show{display:block}
+.extra-fields{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.form-actions{display:flex;gap:8px;margin-top:4px}
+.count{font-size:12px;color:var(--text3)}
+
+/* Edit form in modal */
+.edit-wrap .form-row input,.edit-wrap .form-row select,.edit-wrap .form-row textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+.edit-wrap .form-row input:focus,.edit-wrap .form-row select:focus,.edit-wrap .form-row textarea:focus{border-color:var(--accent)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div>
+    <div class="logo"><span>AIS</span> Database</div>
+    <div class="logo-sub">Aedan and Ian Studios</div>
+  </div>
+  <div class="header-right">
+    <span class="count" id="countBadge"></span>
+    <button class="btn primary" onclick="toggleAdd()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nieuw item
+    </button>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- Add form -->
+  <div class="form-panel" id="addForm">
+    <div class="form-title">Nieuw item toevoegen</div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label>Naam *</label>
+        <input type="text" id="aN" placeholder="Naam van het item...">
+      </div>
+      <div class="form-row">
+        <label>Categorie *</label>
+        <select id="aC">
+          <option>Karakter</option><option>Locatie</option><option>Item</option>
+          <option>Organisatie</option><option>Event</option><option>Overig</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Ondertitel / korte omschrijving</label>
+      <input type="text" id="aS" placeholder="bv. Hoofdpersonage, Verlaten stad...">
+    </div>
+    <div class="form-row">
+      <label>Beschrijving</label>
+      <textarea id="aD" placeholder="Vertel meer over dit item..."></textarea>
+    </div>
+    <div class="form-row">
+      <label>Foto</label>
+      <div class="photo-drop" id="addPhotoDrop">
+        <input type="file" accept="image/*" onchange="previewPhoto(this,'addPreview','addPhotoData')">
+        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <p>Klik om een foto te kiezen<br><span style="font-size:11px;opacity:0.6">JPG, PNG, GIF, WebP</span></p>
+      </div>
+      <img class="photo-preview" id="addPreview" alt="">
+      <input type="hidden" id="addPhotoData">
+    </div>
+    <div class="form-row">
+      <label>Extra velden (optioneel)</label>
+      <div class="extra-fields">
+        <input type="text" id="aK1" placeholder="Label 1">
+        <input type="text" id="aV1" placeholder="Waarde 1">
+        <input type="text" id="aK2" placeholder="Label 2">
+        <input type="text" id="aV2" placeholder="Waarde 2">
+        <input type="text" id="aK3" placeholder="Label 3">
+        <input type="text" id="aV3" placeholder="Waarde 3">
+        <input type="text" id="aK4" placeholder="Label 4">
+        <input type="text" id="aV4" placeholder="Waarde 4">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn primary" onclick="addEntry()">Opslaan</button>
+      <button class="btn" onclick="toggleAdd()">Annuleren</button>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search" type="text" id="searchInput" placeholder="Zoeken op naam, omschrijving..." oninput="render()">
+    </div>
+  </div>
+
+  <div class="cat-tabs" id="catTabs"></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg" onclick="bgClose(event)">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+const CAT = {
+  Karakter:    {bg:'#3C3489',light:'#EEEDFE',text:'#AFA9EC'},
+  Locatie:     {bg:'#085041',light:'#E1F5EE',text:'#5DCAA5'},
+  Item:        {bg:'#633806',light:'#FAEEDA',text:'#EF9F27'},
+  Organisatie: {bg:'#0C447C',light:'#E6F1FB',text:'#85B7EB'},
+  Event:       {bg:'#4A1B0C',light:'#FAECE7',text:'#F0997B'},
+  Overig:      {bg:'#2C2C2A',light:'#F1EFE8',text:'#B4B2A9'}
+};
+const KEY = 'ais_db_v2';
+let db = [];
+let activeCat = 'Alles';
+
+function load() {
+  try { const s = localStorage.getItem(KEY); if (s) db = JSON.parse(s); } catch(e) {}
+  if (!db.length) db = [
+    {id:1,name:'Aedan',cat:'Karakter',sub:'Medeoprichter & hoofdpersonage',desc:'Een van de twee oprichters van AIS. Creatief en gedreven, altijd bezig met nieuwe verhalen.',photo:'',extra:[{k:'Rol',v:'Oprichter'},{k:'Specialiteit',v:'Verhalen schrijven'},{k:'',v:''},{k:'',v:''}]},
+    {id:2,name:'Ian',cat:'Karakter',sub:'Medeoprichter & creatief directeur',desc:'De andere helft van het duo. Gepassioneerd over worldbuilding en character design.',photo:'',extra:[{k:'Rol',v:'Oprichter'},{k:'Specialiteit',v:'Worldbuilding'},{k:'',v:''},{k:'',v:''}]},
+    {id:3,name:'Studio HQ',cat:'Locatie',sub:'Hoofdkwartier van AIS',desc:'De centrale plek waar alle AIS projecten tot leven komen.',photo:'',extra:[{k:'Type',v:'Interieur'},{k:'Status',v:'Actief'},{k:'',v:''},{k:'',v:''}]},
+  ];
+  save();
+}
+
+function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e) {} }
+
+function cats() { return ['Alles', ...[...new Set(db.map(d => d.cat))]]; }
+
+function filtered() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  return db.filter(d => {
+    const mc = activeCat === 'Alles' || d.cat === activeCat;
+    const mq = !q || d.name.toLowerCase().includes(q) || (d.sub||'').toLowerCase().includes(q) || (d.desc||'').toLowerCase().includes(q);
+    return mc && mq;
+  });
+}
+
+function render() {
+  // tabs
+  const tabs = document.getElementById('catTabs');
+  tabs.innerHTML = cats().map(c => {
+    const count = c === 'Alles' ? db.length : db.filter(d => d.cat === c).length;
+    return `<button class="cat-tab${c===activeCat?' active':''}" onclick="setTab('${c}')">${c} <span style="opacity:0.6">${count}</span></button>`;
+  }).join('');
+
+  document.getElementById('countBadge').textContent = db.length + ' items';
+
+  // grid
+  const items = filtered();
+  const grid = document.getElementById('grid');
+  if (!items.length) { grid.innerHTML = '<div class="empty">Geen items gevonden.</div>'; return; }
+
+  grid.innerHTML = items.map(e => {
+    const c = CAT[e.cat] || CAT.Overig;
+    const imgHtml = e.photo
+      ? `<img class="card-img" src="${e.photo}" alt="${e.name}">`
+      : `<div class="card-img-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
+    return `<div class="card" onclick="openEntry(${e.id})">
+      ${imgHtml}
+      <div class="card-body">
+        <span class="card-cat" style="background:${c.bg};color:${c.text}">${e.cat}</span>
+        <div class="card-name">${e.name}</div>
+        <div class="card-sub">${e.sub || '—'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setTab(c) { activeCat = c; render(); }
+
+function openEntry(id) {
+  const e = db.find(d => d.id === id);
+  if (!e) return;
+  const c = CAT[e.cat] || CAT.Overig;
+  const heroHtml = e.photo
+    ? `<img src="${e.photo}" alt="${e.name}" style="width:100%;height:220px;object-fit:cover;display:block">`
+    : `<div class="modal-hero-placeholder"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
+  const extras = (e.extra||[]).filter(x=>x.k).map(x=>`<div class="field-block"><div class="field-label">${x.k}</div><div class="field-val">${x.v||'—'}</div></div>`).join('');
+
+  document.getElementById('modal').innerHTML = `
+    ${heroHtml}
+    <div class="modal-body">
+      <div class="modal-top">
+        <div class="modal-name">${e.name}</div>
+        <button class="close-btn" onclick="closeModal()" aria-label="Sluiten">×</button>
+      </div>
+      <span class="modal-cat-badge" style="background:${c.bg};color:${c.text}">${e.cat}</span>
+      <div id="modalView">
+        ${e.sub ? `<div class="field-block"><div class="field-label">Ondertitel</div><div class="field-val">${e.sub}</div></div>` : ''}
+        ${e.desc ? `<div class="field-block"><div class="field-label">Beschrijving</div><div class="field-val">${e.desc}</div></div>` : ''}
+        ${extras}
+        <div class="modal-actions">
+          <button class="btn sm primary" onclick="showEdit(${id})">✏ Bewerken</button>
+          <button class="btn sm danger" onclick="deleteEntry(${id})">✕ Verwijderen</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function showEdit(id) {
+  const e = db.find(d => d.id === id);
+  const ex = e.extra || [{k:'',v:''},{k:'',v:''},{k:'',v:''},{k:'',v:''}];
+  while(ex.length < 4) ex.push({k:'',v:''});
+  const catOpts = Object.keys(CAT).map(k=>`<option${k===e.cat?' selected':''}>${k}</option>`).join('');
+  document.getElementById('modalView').innerHTML = `<div class="edit-wrap">
+    <div class="form-row"><label>Naam</label><input id="eN" value="${e.name}"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-row"><label>Categorie</label><select id="eC">${catOpts}</select></div>
+      <div class="form-row"><label>Ondertitel</label><input id="eS" value="${e.sub||''}"></div>
+    </div>
+    <div class="form-row"><label>Beschrijving</label><textarea id="eD">${e.desc||''}</textarea></div>
+    <div class="form-row">
+      <label>Foto</label>
+      <div class="photo-drop"><input type="file" accept="image/*" onchange="previewPhoto(this,'ePreview','ePhotoData')">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <p style="font-size:12px;color:var(--text3)">Nieuwe foto kiezen (laat leeg om huidige te behouden)</p>
+      </div>
+      <img class="photo-preview${e.photo?' show':''}" id="ePreview" src="${e.photo||''}" alt="">
+      <input type="hidden" id="ePhotoData" value="${e.photo||''}">
+    </div>
+    <div class="form-row"><label>Extra velden</label>
+      <div class="extra-fields">
+        <input id="eK0" value="${ex[0].k}" placeholder="Label 1"><input id="eV0" value="${ex[0].v}" placeholder="Waarde 1">
+        <input id="eK1" value="${ex[1].k}" placeholder="Label 2"><input id="eV1" value="${ex[1].v}" placeholder="Waarde 2">
+        <input id="eK2" value="${ex[2].k}" placeholder="Label 3"><input id="eV2" value="${ex[2].v}" placeholder="Waarde 3">
+        <input id="eK3" value="${ex[3].k}" placeholder="Label 4"><input id="eV3" value="${ex[3].v}" placeholder="Waarde 4">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn sm primary" onclick="saveEdit(${id})">Opslaan</button>
+      <button class="btn sm" onclick="openEntry(${id})">Annuleren</button>
+    </div>
+  </div>`;
+}
+
+function saveEdit(id) {
+  const e = db.find(d => d.id === id);
+  e.name = document.getElementById('eN').value.trim() || e.name;
+  e.cat  = document.getElementById('eC').value;
+  e.sub  = document.getElementById('eS').value;
+  e.desc = document.getElementById('eD').value;
+  const newPhoto = document.getElementById('ePhotoData').value;
+  if (newPhoto) e.photo = newPhoto;
+  e.extra = [0,1,2,3].map(i=>({k:document.getElementById('eK'+i).value,v:document.getElementById('eV'+i).value}));
+  save(); render(); openEntry(id);
+}
+
+function deleteEntry(id) {
+  if (!confirm('Weet je zeker dat je dit item wilt verwijderen?')) return;
+  db = db.filter(d => d.id !== id);
+  save(); render(); closeModal();
+}
+
+function addEntry() {
+  const name = document.getElementById('aN').value.trim();
+  if (!name) { alert('Naam is verplicht!'); return; }
+  db.unshift({
+    id: Date.now(),
+    name,
+    cat:   document.getElementById('aC').value,
+    sub:   document.getElementById('aS').value,
+    desc:  document.getElementById('aD').value,
+    photo: document.getElementById('addPhotoData').value,
+    extra: [1,2,3,4].map(i=>({k:document.getElementById('aK'+i).value,v:document.getElementById('aV'+i).value}))
+  });
+  save();
+  ['aN','aS','aD','aK1','aV1','aK2','aV2','aK3','aV3','aK4','aV4','addPhotoData'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('addPreview').classList.remove('show');
+  document.getElementById('addPreview').src = '';
+  document.getElementById('addForm').classList.remove('open');
+  render();
+}
+
+function previewPhoto(input, previewId, dataId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById(previewId);
+    preview.src = e.target.result;
+    preview.classList.add('show');
+    document.getElementById(dataId).value = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function toggleAdd() {
+  document.getElementById('addForm').classList.toggle('open');
+}
+
+function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+function bgClose(e) { if (e.target === document.getElementById('modalBg')) closeModal(); }
+
+load(); render();
+</script>
+</body>
+</html>
