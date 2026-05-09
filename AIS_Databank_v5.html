@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIS Databank — Aedan and Ian Studios</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080808;--s1:#0f0f0f;--s2:#161616;--s3:#1e1e1e;
+  --bdr:#2a2a2a;--bdr2:#383838;
+  --tx:#e8e8e8;--tx2:#999;--tx3:#555;
+  --acc:#c8a84b;--acc2:#e8c96d;
+  --r:4px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:100;background:rgba(8,8,8,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--bdr);padding:0 2.5rem;display:flex;align-items:center;height:56px;gap:2rem}
+.logo{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.logo em{color:var(--acc);font-style:normal}
+.hdr-search{flex:1;max-width:500px;position:relative}
+.hdr-search input{width:100%;background:var(--s2);border:1px solid var(--bdr2);border-radius:var(--r);padding:7px 40px 7px 14px;font-family:'Barlow',sans-serif;font-size:13px;color:var(--tx);outline:none;transition:border-color .2s}
+.hdr-search input:focus{border-color:var(--acc)}
+.hdr-search input::placeholder{color:var(--tx3);text-transform:uppercase;font-size:12px;letter-spacing:.08em}
+.hdr-search svg{position:absolute;right:12px;top:50%;transform:translateY(-50%);opacity:.35;pointer-events:none}
+.hdr-right{margin-left:auto}
+.lock-btn{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:6px 16px;border-radius:var(--r);border:1px solid var(--bdr2);background:transparent;color:var(--tx3);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.lock-btn:hover{border-color:var(--tx2);color:var(--tx2)}
+.lock-btn.on{border-color:var(--acc);color:var(--acc)}
+
+/* ADMIN BAR */
+.abar{display:none;align-items:center;gap:10px;flex-wrap:wrap;padding:.6rem 2.5rem;background:rgba(200,168,75,.05);border-bottom:1px solid rgba(200,168,75,.18);z-index:99}
+.abar.show{display:flex}
+.abar-label{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc)}
+
+/* BUTTONS */
+.btn{padding:7px 18px;border-radius:var(--r);font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid var(--bdr2);background:transparent;color:var(--tx2);transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{border-color:var(--tx2);color:var(--tx)}
+.btn.p{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700}.btn.p:hover{background:var(--acc2);border-color:var(--acc2)}
+.btn.d{border-color:rgba(200,60,60,.4);color:#c84040}.btn.d:hover{background:rgba(200,60,60,.12)}
+.btn.sm{padding:4px 12px;font-size:11px}
+.ml{margin-left:auto}
+
+/* CONTENT */
+.content{position:relative;z-index:1;padding:2rem 2.5rem;max-width:1400px;margin:0 auto}
+
+/* FORM PANEL */
+.fpanel{background:var(--s1);border:1px solid var(--bdr2);border-radius:var(--r);padding:1.5rem;margin-bottom:1.5rem;display:none}
+.fpanel.open{display:block}
+.fpanel-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1.2rem;color:var(--acc)}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fr{margin-bottom:11px}
+.fr label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px}
+.fr input,.fr select,.fr textarea{width:100%;padding:8px 11px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);color:var(--tx);font-size:13px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s}
+.fr input:focus,.fr select:focus,.fr textarea:focus{border-color:var(--acc)}
+.fr textarea{resize:vertical;min-height:75px;font-weight:300}
+.fr select option{background:var(--s1)}
+.photo-drop{border:1px dashed var(--bdr2);border-radius:var(--r);padding:1rem;text-align:center;cursor:pointer;position:relative;transition:border-color .2s}
+.photo-drop:hover{border-color:var(--acc)}
+.photo-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-drop p{font-size:11px;color:var(--tx3);font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;margin-top:5px}
+.photo-prev{width:100%;height:100px;object-fit:cover;border-radius:var(--r);margin-top:8px;display:none}
+.photo-prev.show{display:block}
+.extra-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:7px}
+.extra-grid input{padding:7px 9px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);color:var(--tx);font-size:12px;font-family:'Barlow',sans-serif;outline:none;width:100%}
+.extra-grid input:focus{border-color:var(--acc)}
+.fa{display:flex;gap:8px;margin-top:6px}
+
+/* WORLD SECTION */
+.world-section{margin-bottom:2.25rem}
+.world-hdr{position:relative;background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;margin-bottom:.85rem}
+.world-hdr-banner{width:100%;height:85px;object-fit:cover;display:block;opacity:.55}
+.world-hdr-banner-ph{width:100%;height:85px;background:var(--s2)}
+.world-hdr-overlay{position:absolute;inset:0;display:flex;align-items:center;padding:0 1.25rem;gap:12px;background:linear-gradient(90deg,rgba(0,0,0,.75) 55%,transparent)}
+.world-hdr-type{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin-bottom:2px}
+.world-hdr-name{font-family:'Barlow Condensed',sans-serif;font-size:21px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.world-hdr-count{font-size:11px;color:var(--tx3);margin-top:1px}
+.world-hdr-actions{margin-left:auto;display:flex;gap:6px}
+
+/* ROW */
+.world-row{display:flex;gap:9px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scrollbar-color:var(--bdr2) transparent}
+.world-row::-webkit-scrollbar{height:3px}
+.world-row::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+
+/* ENTRY CARD */
+.ecard{flex:0 0 172px;background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s;position:relative}
+.ecard:hover{border-color:#666;transform:translateY(-3px)}
+.ecard img{width:100%;height:195px;object-fit:cover;display:block}
+.ecard-ph{width:100%;height:195px;background:var(--s2);display:flex;align-items:center;justify-content:center}
+.ecard-ph svg{opacity:.12}
+.ecard-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.88) 55%);padding:24px 10px 10px}
+.ecard-cat{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);display:block;margin-bottom:1px}
+.ecard-name{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#fff;line-height:1.2}
+.ecard-c1{position:absolute;bottom:0;right:0;width:9px;height:9px;border-right:2px solid var(--acc);border-bottom:2px solid var(--acc);opacity:.45}
+.ecard-c2{position:absolute;bottom:0;left:0;width:9px;height:9px;border-left:2px solid var(--acc);border-bottom:2px solid var(--acc);opacity:.45}
+
+/* SEE ALL */
+.see-all{flex:0 0 52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);cursor:pointer;transition:border-color .15s;padding:8px 6px}
+.see-all:hover{border-color:var(--acc)}
+.see-all span{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);writing-mode:vertical-rl}
+.see-all svg{color:var(--acc)}
+
+/* DIVIDER */
+hr.div{border:none;border-top:1px solid var(--bdr);margin:2rem 0}
+
+/* BROWSE */
+.browse-wrap{display:grid;grid-template-columns:185px 1fr;gap:1.5rem;align-items:start}
+.browse-sidebar h3{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);margin-bottom:.7rem;padding-bottom:.45rem;border-bottom:1px solid var(--bdr)}
+.cat-list{display:flex;flex-direction:column;gap:1px}
+.cat-item{display:flex;justify-content:space-between;align-items:center;padding:6px 9px;border-radius:var(--r);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--tx3);border:1px solid transparent;transition:all .15s}
+.cat-item:hover{color:var(--tx2);background:var(--s2)}
+.cat-item.active{color:var(--acc);border-color:rgba(200,168,75,.25);background:rgba(200,168,75,.04)}
+.cat-item .cnt{font-size:11px;opacity:.7}
+.browse-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+.browse-sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:.55rem;border-bottom:1px solid var(--bdr)}
+.browse-sec-hdr h2{font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2)}
+.browse-sec-hdr h2 strong{color:var(--tx);margin-left:5px}
+.empty{text-align:center;padding:2.5rem;color:var(--tx3);font-family:'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:12px;grid-column:1/-1}
+
+/* CAT MANAGER */
+.cat-mgr{background:var(--s2);border-radius:var(--r);padding:.9rem;margin-top:10px}
+.cat-mgr h4{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:9px}
+.cat-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+.cat-chip{display:flex;align-items:center;gap:3px;padding:3px 9px;border-radius:2px;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em;border:1px solid var(--bdr2);background:var(--s1);color:var(--tx2)}
+.cat-chip button{background:none;border:none;cursor:pointer;color:var(--tx3);font-size:13px;line-height:1;padding:0 2px;transition:color .15s}
+.cat-chip button:hover{color:#c84040}
+.cat-add{display:flex;gap:7px}
+.cat-add input{flex:1;padding:6px 9px;background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);color:var(--tx);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
+.cat-add input:focus{border-color:var(--acc)}
+
+/* MODAL BACKGROUNDS */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:500;align-items:flex-start;justify-content:center;padding:0;overflow-y:auto}
+.mbg.open{display:flex}
+
+/* DETAIL PAGE STYLE MODAL */
+.detail-page{background:var(--bg);width:100%;min-height:100vh;max-width:1100px;margin:0 auto;padding-bottom:3rem}
+.detail-hero{display:grid;grid-template-columns:3fr 2fr;min-height:340px;background:var(--s1);border-bottom:1px solid var(--bdr);margin-bottom:2rem}
+.detail-hero-img{width:100%;height:100%;min-height:340px;object-fit:cover;display:block}
+.detail-hero-img-ph{width:100%;min-height:340px;background:var(--s2);display:flex;align-items:center;justify-content:center}
+.detail-hero-img-ph svg{opacity:.1}
+.detail-hero-info{padding:2rem 1.75rem;display:flex;flex-direction:column;justify-content:center;gap:.75rem;position:relative}
+.detail-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--tx3);cursor:pointer;font-size:22px;line-height:1;transition:color .15s}
+.detail-close:hover{color:var(--tx)}
+.detail-cat{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.detail-name{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;line-height:1}
+.detail-sub{font-size:14px;color:var(--tx2);font-weight:300;line-height:1.5}
+.detail-desc{font-size:14px;color:var(--tx2);font-weight:300;line-height:1.65}
+.detail-admin-btns{display:flex;gap:8px;margin-top:.5rem}
+.detail-body{padding:0 2.5rem}
+.detail-fields{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;border-bottom:1px solid var(--bdr);padding-bottom:2rem}
+.detail-field-group h4{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx2);margin-bottom:.5rem;padding-bottom:.4rem;border-bottom:1px solid var(--bdr)}
+.detail-field-val{font-size:14px;color:var(--acc);font-weight:300}
+.detail-related h3{font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2);margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--bdr)}
+.related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+
+/* EDIT MODAL */
+.edit-modal-box{background:var(--s1);border:1px solid var(--bdr2);border-radius:var(--r);width:100%;max-width:560px;padding:1.75rem;margin:2rem auto}
+
+/* LOGIN MODAL */
+.login-box{background:var(--s1);border:1px solid var(--bdr2);border-radius:var(--r);padding:2.5rem 2rem;width:100%;max-width:320px;text-align:center;margin:auto;align-self:center}
+.login-box h2{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+.login-box p{font-size:13px;color:var(--tx3);margin-bottom:1.5rem;font-weight:300}
+.login-box input{width:100%;padding:10px 14px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:.2em;text-align:center;outline:none;margin-bottom:10px;transition:border-color .2s}
+.login-box input:focus{border-color:var(--acc)}
+.login-err{font-size:11px;color:#c84040;margin-bottom:9px;display:none;font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+
+@media(max-width:700px){
+  .hdr{padding:0 1rem}.content{padding:1.25rem 1rem}
+  .detail-hero{grid-template-columns:1fr}.browse-wrap{grid-template-columns:1fr}
+  .fg,.extra-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="logo"><em>AIS</em> Databank</div>
+  <div class="hdr-search">
+    <input type="text" id="gSearch" placeholder="Search Databank" oninput="onSearch()">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  </div>
+  <div class="hdr-right">
+    <button class="lock-btn" id="lockBtn" onclick="toggleLogin()">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span id="lockLabel">Admin</span>
+    </button>
+  </div>
+</header>
+
+<div class="abar" id="abar">
+  <span class="abar-label">⚡ Beheerder actief</span>
+  <button class="btn p sm" onclick="openWorldForm()">+ Serie / Film</button>
+  <button class="btn sm" onclick="openEntryForm()">+ Nieuw item</button>
+  <button class="btn sm" onclick="toggleCatMgr()">⚙ Categorieën</button>
+  <button class="btn d sm ml" onclick="logout()">Uitloggen</button>
+</div>
+
+<div class="content">
+
+  <!-- WORLD FORM -->
+  <div class="fpanel" id="worldPanel">
+    <div class="fpanel-title" id="worldPanelTitle">Nieuwe serie / film</div>
+    <div class="fg">
+      <div class="fr"><label>Naam *</label><input id="wfName" placeholder="bv. Wings of Fate"></div>
+      <div class="fr"><label>Type</label>
+        <select id="wfType"><option>Film</option><option>Serie</option><option>Game</option><option>Comic</option><option>Overig</option></select>
+      </div>
+    </div>
+    <div class="fr"><label>Beschrijving</label><textarea id="wfDesc" placeholder="Korte omschrijving..."></textarea></div>
+    <div class="fr"><label>Banner / Poster</label>
+      <div class="photo-drop">
+        <input type="file" accept="image/*" onchange="prevPhoto(this,'wfPrev','wfPhoto')">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <p>Klik voor banner afbeelding</p>
+      </div>
+      <img class="photo-prev" id="wfPrev" alt=""><input type="hidden" id="wfPhoto">
+    </div>
+    <div class="fa">
+      <button class="btn p" onclick="saveWorld()">Opslaan</button>
+      <button class="btn" onclick="closeWorldForm()">Annuleren</button>
+    </div>
+  </div>
+
+  <!-- ENTRY FORM -->
+  <div class="fpanel" id="entryPanel">
+    <div class="fpanel-title">Nieuw item toevoegen</div>
+    <div class="fg">
+      <div class="fr"><label>Naam *</label><input id="efName" placeholder="Naam..."></div>
+      <div class="fr"><label>Categorie</label><select id="efCat"></select></div>
+    </div>
+    <div class="fr"><label>Serie / Film</label><select id="efWorld"></select></div>
+    <div class="fr"><label>Ondertitel</label><input id="efSub" placeholder="Korte omschrijving..."></div>
+    <div class="fr"><label>Beschrijving</label><textarea id="efDesc" placeholder="Details..."></textarea></div>
+    <div class="fr"><label>Foto</label>
+      <div class="photo-drop">
+        <input type="file" accept="image/*" onchange="prevPhoto(this,'efPrev','efPhoto')">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <p>Klik voor foto</p>
+      </div>
+      <img class="photo-prev" id="efPrev" alt=""><input type="hidden" id="efPhoto">
+    </div>
+    <div class="fr"><label>Extra velden (optioneel)</label>
+      <div class="extra-grid">
+        <input id="k1" placeholder="Label 1"><input id="v1" placeholder="Waarde 1">
+        <input id="k2" placeholder="Label 2"><input id="v2" placeholder="Waarde 2">
+        <input id="k3" placeholder="Label 3"><input id="v3" placeholder="Waarde 3">
+        <input id="k4" placeholder="Label 4"><input id="v4" placeholder="Waarde 4">
+      </div>
+    </div>
+    <div class="fa">
+      <button class="btn p" onclick="saveEntry()">Opslaan</button>
+      <button class="btn" onclick="closeEntryForm()">Annuleren</button>
+    </div>
+    <div class="cat-mgr" id="catMgr" style="display:none;margin-top:12px">
+      <h4>Categorieën beheren</h4>
+      <div class="cat-chips" id="catChips"></div>
+      <div class="cat-add">
+        <input id="newCatIn" placeholder="Nieuwe categorie...">
+        <button class="btn p sm" onclick="addCat()">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORLDS -->
+  <div id="worldsWrap"></div>
+
+  <hr class="div">
+
+  <!-- BROWSE -->
+  <div class="browse-sec-hdr">
+    <h2>Browse Databank <strong id="browseCount"></strong></h2>
+    <span id="browseWorldLabel" style="font-size:12px;color:var(--acc);font-family:'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;display:none" onclick="clearWorldFilter()">✕ Filter wissen</span>
+  </div>
+  <div class="browse-wrap">
+    <div class="browse-sidebar">
+      <h3>Categorieën</h3>
+      <div class="cat-list" id="catFilterList"></div>
+    </div>
+    <div class="browse-grid" id="browseGrid"></div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="mbg" id="loginBg" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="login-box">
+    <svg width="26" height="26" fill="none" stroke="var(--acc)" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 10px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <h2>Admin Login</h2>
+    <p>Voer het wachtwoord in</p>
+    <input type="password" id="pwIn" placeholder="••••••" onkeydown="if(event.key==='Enter')tryLogin()">
+    <div class="login-err" id="loginErr">Verkeerd wachtwoord</div>
+    <button class="btn p" style="width:100%;justify-content:center" onclick="tryLogin()">Inloggen</button>
+  </div>
+</div>
+
+<!-- DETAIL VIEW -->
+<div class="mbg" id="detailBg" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-page" id="detailPage"></div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="mbg" id="editBg" onclick="if(event.target===this)closeEdit()">
+  <div class="edit-modal-box" id="editBox"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+const ADMIN_PW = 'ais2024'; // ← pas aan!
+// ══════════════════════════════════════
+
+const K_DB='ais4_db', K_WD='ais4_wd', K_CT='ais4_ct';
+let db=[], worlds=[], cats=[], isAdmin=false, browseWorld=null, browseCat='Alles';
+let editWorldId=null, editEntryId=null, currentDetailId=null, currentEntryId=null;
+
+function uid(p){return p+Date.now()+Math.random().toString(36).slice(2,7);}
+
+// ── DATA ──
+function loadData(){
+  try{db=JSON.parse(localStorage.getItem(K_DB)||'[]');}catch(e){db=[];}
+  try{worlds=JSON.parse(localStorage.getItem(K_WD)||'[]');}catch(e){worlds=[];}
+  try{cats=JSON.parse(localStorage.getItem(K_CT)||'[]');}catch(e){cats=[];}
+  // normalize ids to string
+  db=db.map(e=>({...e,id:String(e.id),worldId:String(e.worldId)}));
+  worlds=worlds.map(w=>({...w,id:String(w.id)}));
+  if(!cats.length) cats=['Karakter','Locatie','Item','Organisatie','Event','Overig'];
+  if(!worlds.length) worlds=[
+    {id:'w1',name:'Wings of Fate',type:'Film',desc:'',photo:''},
+    {id:'w2',name:'Onbekend Project',type:'Serie',desc:'',photo:''},
+  ];
+  if(!db.length) db=[
+    {id:'e1',worldId:'w1',name:'Aedan',cat:'Karakter',sub:'Hoofdpersonage',desc:'Een van de twee oprichters van AIS.',photo:'',extra:[{k:'Rol',v:'Hoofdrol'},{k:'',v:''},{k:'',v:''},{k:'',v:''}]},
+    {id:'e2',worldId:'w1',name:'Ian',cat:'Karakter',sub:'Medeoprichter',desc:'Creatief directeur van AIS.',photo:'',extra:[{k:'Rol',v:'Bijrol'},{k:'',v:''},{k:'',v:''},{k:'',v:''}]},
+    {id:'e3',worldId:'w2',name:'Studio HQ',cat:'Locatie',sub:'Hoofdkwartier',desc:'Centrale locatie.',photo:'',extra:[{k:'Type',v:'Interieur'},{k:'',v:''},{k:'',v:''},{k:'',v:''}]},
+  ];
+  saveData();
+}
+function saveData(){
+  localStorage.setItem(K_DB,JSON.stringify(db));
+  localStorage.setItem(K_WD,JSON.stringify(worlds));
+  localStorage.setItem(K_CT,JSON.stringify(cats));
+}
+
+// ── AUTH ──
+function toggleLogin(){
+  if(isAdmin){logout();return;}
+  document.getElementById('loginBg').classList.add('open');
+  document.getElementById('pwIn').value='';
+  document.getElementById('loginErr').style.display='none';
+  setTimeout(()=>document.getElementById('pwIn').focus(),80);
+}
+function tryLogin(){
+  if(document.getElementById('pwIn').value===ADMIN_PW){
+    isAdmin=true;
+    document.getElementById('loginBg').classList.remove('open');
+    document.getElementById('abar').classList.add('show');
+    document.getElementById('lockBtn').classList.add('on');
+    document.getElementById('lockLabel').textContent='Admin ✓';
+    renderAll();
+  }else{
+    document.getElementById('loginErr').style.display='block';
+    document.getElementById('pwIn').value='';
+  }
+}
+function logout(){
+  isAdmin=false;
+  document.getElementById('abar').classList.remove('show');
+  document.getElementById('lockBtn').classList.remove('on');
+  document.getElementById('lockLabel').textContent='Admin';
+  document.getElementById('worldPanel').classList.remove('open');
+  document.getElementById('entryPanel').classList.remove('open');
+  renderAll();
+}
+
+// ── CATEGORIES ──
+function toggleCatMgr(){
+  document.getElementById('entryPanel').classList.add('open');
+  const el=document.getElementById('catMgr');
+  el.style.display=el.style.display==='none'?'block':'none';
+  renderCatMgr();
+}
+function renderCatMgr(){
+  document.getElementById('catChips').innerHTML=cats.map(c=>`<span class="cat-chip">${c}<button onclick="removeCat(this,'${c}')">×</button></span>`).join('');
+  fillSelects();
+}
+function addCat(){
+  const v=document.getElementById('newCatIn').value.trim();
+  if(!v||cats.includes(v))return;
+  cats.push(v);document.getElementById('newCatIn').value='';
+  saveData();renderCatMgr();renderAll();
+}
+function removeCat(btn,name){
+  event.stopPropagation();
+  if(!confirm(`Categorie "${name}" verwijderen?`))return;
+  cats=cats.filter(c=>c!==name);saveData();renderCatMgr();renderAll();
+}
+
+// ── FILL SELECTS ──
+function fillSelects(){
+  ['efCat','editECat'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML=cats.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
+  });
+  ['efWorld','editEWorld'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML=worlds.map(w=>`<option value="${w.id}"${w.id===cur?' selected':''}>${w.name}</option>`).join('');
+  });
+}
+
+// ── WORLD FORM ──
+function openWorldForm(editId){
+  editWorldId=editId||null;
+  document.getElementById('entryPanel').classList.remove('open');
+  const p=document.getElementById('worldPanel');
+  p.classList.add('open');
+  if(editId){
+    const w=worlds.find(x=>x.id===editId);
+    document.getElementById('worldPanelTitle').textContent='Serie / Film bewerken';
+    document.getElementById('wfName').value=w.name;
+    document.getElementById('wfType').value=w.type;
+    document.getElementById('wfDesc').value=w.desc||'';
+    document.getElementById('wfPhoto').value=w.photo||'';
+    const pr=document.getElementById('wfPrev');
+    if(w.photo){pr.src=w.photo;pr.classList.add('show');}else{pr.src='';pr.classList.remove('show');}
+  }else{
+    document.getElementById('worldPanelTitle').textContent='Nieuwe serie / film';
+    ['wfName','wfDesc','wfPhoto'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('wfType').value='Film';
+    document.getElementById('wfPrev').classList.remove('show');
+  }
+  p.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closeWorldForm(){document.getElementById('worldPanel').classList.remove('open');editWorldId=null;}
+function saveWorld(){
+  const name=document.getElementById('wfName').value.trim();
+  if(!name){alert('Naam is verplicht!');return;}
+  if(editWorldId){
+    const w=worlds.find(x=>x.id===editWorldId);
+    w.name=name;w.type=document.getElementById('wfType').value;
+    w.desc=document.getElementById('wfDesc').value;
+    const np=document.getElementById('wfPhoto').value;if(np)w.photo=np;
+  }else{
+    worlds.push({id:uid('w'),name,type:document.getElementById('wfType').value,desc:document.getElementById('wfDesc').value,photo:document.getElementById('wfPhoto').value});
+  }
+  saveData();closeWorldForm();renderAll();
+}
+function deleteWorld(id){
+  if(!confirm('Deze serie/film EN al zijn items verwijderen?'))return;
+  worlds=worlds.filter(w=>w.id!==id);
+  db=db.filter(e=>e.worldId!==id);
+  saveData();renderAll();
+}
+
+// ── ENTRY FORM ──
+function openEntryForm(worldId){
+  editEntryId=null;
+  document.getElementById('worldPanel').classList.remove('open');
+  const p=document.getElementById('entryPanel');
+  p.classList.add('open');
+  ['efName','efSub','efDesc','efPhoto','k1','v1','k2','v2','k3','v3','k4','v4'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('efPrev').classList.remove('show');
+  document.getElementById('efPrev').src='';
+  fillSelects();
+  if(worldId)document.getElementById('efWorld').value=worldId;
+  p.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closeEntryForm(){document.getElementById('entryPanel').classList.remove('open');}
+function saveEntry(){
+  const name=document.getElementById('efName').value.trim();
+  if(!name){alert('Naam is verplicht!');return;}
+  db.unshift({
+    id:uid('e'),
+    worldId:String(document.getElementById('efWorld').value),
+    name,
+    cat:document.getElementById('efCat').value,
+    sub:document.getElementById('efSub').value,
+    desc:document.getElementById('efDesc').value,
+    photo:document.getElementById('efPhoto').value,
+    extra:[1,2,3,4].map(i=>({k:document.getElementById('k'+i).value,v:document.getElementById('v'+i).value}))
+  });
+  saveData();closeEntryForm();renderAll();
+}
+
+// ── EDIT ENTRY ──
+function openEdit(id){
+  currentEntryId=id;
+  const e=db.find(x=>x.id===id);if(!e)return;
+  editEntryId=id;
+  const ex=[...(e.extra||[])];while(ex.length<4)ex.push({k:'',v:''});
+  fillSelects();
+  const catOpts=cats.map(c=>`<option${c===e.cat?' selected':''}>${c}</option>`).join('');
+  const wOpts=worlds.map(w=>`<option value="${w.id}"${w.id===e.worldId?' selected':''}>${w.name}</option>`).join('');
+  const fi=(id,val,ph)=>`<input id="${id}" value="${(val||'').replace(/"/g,'&quot;')}" placeholder="${ph}" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);color:var(--tx);font-family:'Barlow',sans-serif;font-size:13px;outline:none;margin-bottom:8px">`;
+  const ft=(id,val,ph)=>`<textarea id="${id}" placeholder="${ph}" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);color:var(--tx);font-family:'Barlow',sans-serif;font-size:13px;outline:none;resize:vertical;min-height:70px;margin-bottom:8px">${(val||'').replace(/</g,'&lt;')}</textarea>`;
+  const sel=(id,opts,lbl)=>`<div style="margin-bottom:10px"><label style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px">${lbl}</label><select id="${id}" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);color:var(--tx);font-family:'Barlow',sans-serif;font-size:13px;outline:none">${opts}</select></div>`;
+  const lbl=(t)=>`<label style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px">${t}</label>`;
+
+  document.getElementById('editBox').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <div class="fpanel-title" style="margin:0">Item bewerken</div>
+      <button style="background:none;border:none;color:var(--tx3);cursor:pointer;font-size:20px" onclick="closeEdit()">×</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>${lbl('Naam')}${fi('editName',e.name,'Naam...')}</div>
+      <div>${sel('editECat',catOpts,'Categorie')}</div>
+    </div>
+    ${sel('editEWorld',wOpts,'Serie / Film')}
+    ${lbl('Ondertitel')}${fi('editSub',e.sub,'Ondertitel...')}
+    ${lbl('Beschrijving')}${ft('editDesc',e.desc,'Beschrijving...')}
+    <div style="margin-bottom:10px">
+      ${lbl('Foto (nieuw kiezen of leeg laten)')}
+      <div class="photo-drop"><input type="file" accept="image/*" onchange="prevPhoto(this,'editPrev','editPhoto')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <p>Klik voor nieuwe foto</p>
+      </div>
+      <img class="photo-prev${e.photo?' show':''}" id="editPrev" src="${e.photo||''}" alt="">
+      <input type="hidden" id="editPhoto" value="${e.photo||''}">
+    </div>
+    ${lbl('Extra velden')}
+    <div class="extra-grid" style="margin-bottom:10px">
+      ${[0,1,2,3].map(i=>`<input id="ek${i}" value="${(ex[i].k||'').replace(/"/g,'&quot;')}" placeholder="Label ${i+1}" style="padding:7px 9px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);color:var(--tx);font-family:'Barlow',sans-serif;font-size:12px;outline:none;width:100%"><input id="ev${i}" value="${(ex[i].v||'').replace(/"/g,'&quot;')}" placeholder="Waarde ${i+1}" style="padding:7px 9px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);color:var(--tx);font-family:'Barlow',sans-serif;font-size:12px;outline:none;width:100%">`).join('')}
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn p sm" onclick="saveEdit()">Opslaan</button>
+      <button class="btn d sm" onclick="deleteEntry(currentEntryId)">Verwijderen</button>
+      <button class="btn sm" onclick="closeEdit()">Annuleren</button>
+    </div>`;
+  document.getElementById('editBg').classList.add('open');
+}
+function saveEdit(){
+  const e=db.find(x=>x.id===editEntryId);if(!e)return;
+  e.name=document.getElementById('editName').value.trim()||e.name;
+  e.cat=document.getElementById('editECat').value;
+  e.worldId=String(document.getElementById('editEWorld').value);
+  e.sub=document.getElementById('editSub').value;
+  e.desc=document.getElementById('editDesc').value;
+  const np=document.getElementById('editPhoto').value;if(np)e.photo=np;
+  e.extra=[0,1,2,3].map(i=>({k:document.getElementById('ek'+i).value,v:document.getElementById('ev'+i).value}));
+  saveData();closeEdit();closeDetail();renderAll();
+}
+function deleteEntry(id){
+  if(!confirm('Weet je zeker dat je dit item wilt verwijderen?'))return;
+  db=db.filter(x=>x.id!==id);
+  saveData();
+  closeEdit();
+  closeDetail();
+  renderAll();
+}
+function closeEdit(){document.getElementById('editBg').classList.remove('open');}
+
+// ── RENDER ──
+function renderAll(){
+  fillSelects();
+  renderWorldRows();
+  renderBrowse();
+}
+
+function makeCard(e){
+  const imgHtml=e.photo
+    ?`<img src="${e.photo}" alt="${e.name}" style="width:100%;height:195px;object-fit:cover;display:block">`
+    :`<div class="ecard-ph"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
+  return `<div class="ecard" onclick="openDetail('${e.id}')">
+    ${imgHtml}
+    <div class="ecard-overlay">
+      <span class="ecard-cat">${e.cat}</span>
+      <div class="ecard-name">${e.name}</div>
+    </div>
+    <div class="ecard-c1"></div><div class="ecard-c2"></div>
+  </div>`;
+}
+
+function renderWorldRows(){
+  const q=document.getElementById('gSearch').value.toLowerCase();
+  const wrap=document.getElementById('worldsWrap');
+  if(q){wrap.innerHTML='';return;}
+  wrap.innerHTML=worlds.map(w=>{
+    const items=db.filter(e=>e.worldId===w.id);
+    const preview=items.slice(0,8);
+    const bannerHtml=w.photo
+      ?`<img class="world-hdr-banner" src="${w.photo}" alt="${w.name}">`
+      :`<div class="world-hdr-banner-ph"></div>`;
+    const adminBtns=isAdmin
+      ?`<div style="display:flex;gap:5px">
+          <button class="btn sm" onclick="event.stopPropagation();openEntryForm('${w.id}')">+ Item</button>
+          <button class="btn sm" onclick="event.stopPropagation();openWorldForm('${w.id}')">✏</button>
+          <button class="btn d sm" onclick="event.stopPropagation();deleteWorld('${w.id}')">✕</button>
+        </div>`:'';
+    const seeAll=items.length>8
+      ?`<div class="see-all" onclick="filterWorld('${w.id}')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          <span>See All ${items.length}</span>
+        </div>`:'';
+    return `<div class="world-section">
+      <div class="world-hdr">
+        ${bannerHtml}
+        <div class="world-hdr-overlay">
+          <div>
+            <div class="world-hdr-type">${w.type}</div>
+            <div class="world-hdr-name">${w.name}</div>
+            <div class="world-hdr-count">${items.length} item${items.length!==1?'s':''}</div>
+          </div>
+          <div class="world-hdr-actions">${adminBtns}</div>
+        </div>
+      </div>
+      <div class="world-row">${preview.map(makeCard).join('')}${seeAll}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderBrowse(){
+  const q=document.getElementById('gSearch').value.toLowerCase();
+  const items=db.filter(e=>{
+    const mq=!q||(e.name.toLowerCase().includes(q)||(e.sub||'').toLowerCase().includes(q)||(e.desc||'').toLowerCase().includes(q));
+    const mc=browseCat==='Alles'||e.cat===browseCat;
+    const mw=!browseWorld||e.worldId===browseWorld;
+    return mq&&mc&&mw;
+  });
+  // sidebar
+  const allCats=['Alles',...new Set([...cats,...db.map(e=>e.cat).filter(Boolean)])];
+  document.getElementById('catFilterList').innerHTML=allCats.map(c=>{
+    const cnt=c==='Alles'?db.length:db.filter(e=>e.cat===c).length;
+    return `<div class="cat-item${c===browseCat?' active':''}" onclick="setBrowseCat('${c}')"><span>${c}</span><span class="cnt">${cnt}</span></div>`;
+  }).join('');
+  document.getElementById('browseCount').textContent=`(${items.length})`;
+  const wLabel=document.getElementById('browseWorldLabel');
+  if(browseWorld){const w=worlds.find(x=>x.id===browseWorld);wLabel.style.display='block';wLabel.textContent=`✕ ${w?w.name:'filter'} wissen`;}
+  else{wLabel.style.display='none';}
+  const grid=document.getElementById('browseGrid');
+  if(!items.length){grid.innerHTML='<div class="empty">Geen items gevonden</div>';return;}
+  grid.innerHTML=items.map(e=>`<div class="ecard" onclick="openDetail('${e.id}')" style="flex:unset">${e.photo?`<img src="${e.photo}" alt="${e.name}" style="width:100%;height:195px;object-fit:cover;display:block">`:`<div class="ecard-ph"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`}<div class="ecard-overlay"><span class="ecard-cat">${e.cat}</span><div class="ecard-name">${e.name}</div></div><div class="ecard-c1"></div><div class="ecard-c2"></div></div>`).join('');
+}
+
+function filterWorld(wid){browseWorld=wid;browseCat='Alles';document.getElementById('browseGrid').scrollIntoView({behavior:'smooth'});renderBrowse();}
+function clearWorldFilter(){browseWorld=null;renderBrowse();}
+function setBrowseCat(c){browseCat=c;browseWorld=null;renderBrowse();}
+function onSearch(){browseWorld=null;browseCat='Alles';renderAll();}
+
+// ── DETAIL VIEW ──
+function openDetail(id){
+  currentDetailId=id;
+  const e=db.find(x=>x.id===id);if(!e)return;
+  const w=worlds.find(x=>x.id===e.worldId);
+  const related=db.filter(x=>x.id!==id&&(x.worldId===e.worldId||x.cat===e.cat)).slice(0,6);
+  const extras=(e.extra||[]).filter(x=>x.k);
+  const heroImg=e.photo
+    ?`<img class="detail-hero-img" src="${e.photo}" alt="${e.name}">`
+    :`<div class="detail-hero-img-ph"><svg width="60" height="60" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
+  const adminBtns=isAdmin
+    ?`<div class="detail-admin-btns">
+        <button class="btn sm p" onclick="closeDetail();openEdit(currentDetailId)">✏ Bewerken</button>
+        <button class="btn sm d" onclick="deleteEntry(currentDetailId)">✕ Verwijderen</button>
+      </div>`:'';
+  const extraFields=extras.length
+    ?`<div class="detail-fields">${extras.map(x=>`<div class="detail-field-group"><h4>${x.k}</h4><div class="detail-field-val">${x.v}</div></div>`).join('')}</div>`:'';
+  const relatedHtml=related.length
+    ?`<div class="detail-related"><h3>Gerelateerd</h3><div class="related-grid">${related.map(r=>`<div class="ecard" onclick="openDetail('${r.id}')" style="flex:unset">${r.photo?`<img src="${r.photo}" alt="${r.name}" style="width:100%;height:160px;object-fit:cover;display:block">`:`<div class="ecard-ph" style="height:160px"><svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`}<div class="ecard-overlay"><span class="ecard-cat">${r.cat}</span><div class="ecard-name">${r.name}</div></div><div class="ecard-c1"></div><div class="ecard-c2"></div></div>`).join('')}</div></div>`:'';
+
+  document.getElementById('detailPage').innerHTML=`
+    <div class="detail-hero">
+      ${heroImg}
+      <div class="detail-hero-info">
+        <button class="detail-close" onclick="closeDetail()">×</button>
+        <div class="detail-cat">${e.cat}${w?' · '+w.name:''}</div>
+        <div class="detail-name">${e.name}</div>
+        ${e.sub?`<div class="detail-sub">${e.sub}</div>`:''}
+        ${e.desc?`<div class="detail-desc">${e.desc}</div>`:''}
+        ${adminBtns}
+      </div>
+    </div>
+    <div class="detail-body">
+      ${extraFields}
+      ${relatedHtml}
+    </div>`;
+  document.getElementById('detailBg').classList.add('open');
+}
+function closeDetail(){document.getElementById('detailBg').classList.remove('open');}
+
+function prevPhoto(input,prevId,dataId){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const p=document.getElementById(prevId);
+    p.src=ev.target.result;p.classList.add('show');
+    document.getElementById(dataId).value=ev.target.result;
+  };
+  r.readAsDataURL(f);
+}
+
+loadData();renderAll();
+</script>
+</body>
+</html>
